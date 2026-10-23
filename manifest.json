@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AI Writer Assistant — Translate & Writing Bubble",
   "short_name": "AI Writer",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Google-Translate-style floating bubble powered by Gemini or any OpenAI-compatible provider. Select text on any page to translate, fix grammar, reword, define, and coach your writing.",
   "icons": {
     "16": "icons/black/icon16.png",

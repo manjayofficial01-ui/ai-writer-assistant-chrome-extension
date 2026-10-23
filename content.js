@@ -30,7 +30,9 @@
   ];
 
   const Z = '2147483647';
-  const BUBBLE = 48;
+  const BUBBLE_DEFAULT = 48;
+  const BUBBLE_MIN = 36;
+  const BUBBLE_MAX = 64;
   const MAX_SEL = 8000;
   const HOST_ID = 'aiwa-bubble-host';
 
@@ -50,7 +52,7 @@
   let settings = {
     sourceLang: 'Auto-detect', targetLang: 'Nepali', showBubble: true,
     smartContext: true, provider: 'gemini', openaiBaseUrl: 'https://api.openai.com/v1',
-    iconTheme: 'black'
+    iconTheme: 'black', bubbleSize: BUBBLE_DEFAULT
   };
   let host = null, root = null, bubble = null, panel = null, input = null;
   let controlsEl = null, resultsEl = null, tabsEl = null, primaryBtn = null, ctxBtn = null;
@@ -62,6 +64,7 @@
   let lastCtx = null; // smart context for the current selection
   let lastAutoKey = '';
   let curX = 0, curY = 0;
+  let bubbleSize = BUBBLE_DEFAULT;
   let curSource = 'Auto-detect';
   let curTarget = 'Nepali';
   let curTone = 'Professional';
@@ -104,7 +107,7 @@
     }
 
     .bubble {
-      position: fixed; z-index: ${Z}; width: ${BUBBLE}px; height: ${BUBBLE}px;
+      position: fixed; z-index: ${Z}; width: var(--bubble-size, 48px); height: var(--bubble-size, 48px);
       border-radius: 50%; cursor: grab; user-select: none; -webkit-user-select: none; color: var(--cream);
       background: var(--bbg, linear-gradient(135deg, #2E2A23 0%, #0A0908 100%));
       box-shadow:
@@ -142,7 +145,7 @@
         0 0 0 1px rgba(15, 23, 42, .14);
     }
     .bubble svg {
-      position: relative; z-index: 1; width: 23px; height: 23px; color: currentColor;
+      position: relative; z-index: 1; width: calc(var(--bubble-size, 48px) * .48); height: calc(var(--bubble-size, 48px) * .48); color: currentColor;
       pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .18));
     }
 
@@ -467,7 +470,7 @@
   chrome.storage.sync.get({
     sourceLang: 'Auto-detect', targetLang: 'Nepali', showBubble: true,
     smartContext: true, provider: 'gemini', openaiBaseUrl: 'https://api.openai.com/v1',
-    iconTheme: 'black'
+    iconTheme: 'black', bubbleSize: BUBBLE_DEFAULT
   }, (s) => {
     Object.assign(settings, s);
     curSource = settings.sourceLang;
@@ -485,6 +488,7 @@
       if (changes.provider) { settings.provider = changes.provider.newValue; updateProviderLabel(); }
       if (changes.openaiBaseUrl) { settings.openaiBaseUrl = changes.openaiBaseUrl.newValue; updateProviderLabel(); }
       if (changes.iconTheme) { settings.iconTheme = changes.iconTheme.newValue; applyBubbleTheme(); }
+      if (changes.bubbleSize) { settings.bubbleSize = changes.bubbleSize.newValue; applyBubbleSize(settings.bubbleSize); }
       if (changes.showBubble) {
         settings.showBubble = changes.showBubble.newValue;
         if (settings.showBubble) mount(); else unmountBubble();
@@ -529,6 +533,7 @@
     document.documentElement.appendChild(host);
     wireBubble();
     applyBubbleTheme();
+    applyBubbleSize(settings.bubbleSize);
     if (!settings.showBubble) bubble.style.display = 'none'; // host mounted for the panel only
 
     chrome.storage.local.get({ bubblePos: null }, (s) => {
@@ -551,6 +556,22 @@
     }
   }
 
+  // Applies the saved bubble diameter (36–64px) and keeps it on screen.
+  function applyBubbleSize(size) {
+    const numeric = Number(size);
+    bubbleSize = Number.isFinite(numeric)
+      ? Math.min(BUBBLE_MAX, Math.max(BUBBLE_MIN, Math.round(numeric)))
+      : BUBBLE_DEFAULT;
+    if (!bubble) return;
+    bubble.style.setProperty('--bubble-size', bubbleSize + 'px');
+    if (bubble.style.left) {
+      clampPos();
+      bubble.style.left = curX + 'px';
+      bubble.style.top = curY + 'px';
+    }
+    if (panelOpen) positionPanel();
+  }
+
   function unmountBubble() {
     if (bubble) bubble.style.display = 'none';
     closePanel();
@@ -561,7 +582,7 @@
     if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
       curX = pos.x; curY = pos.y;
     } else {
-      curX = Math.max(8, window.innerWidth - BUBBLE - 24);
+      curX = Math.max(8, window.innerWidth - bubbleSize - 24);
       curY = Math.max(8, Math.round(window.innerHeight * 0.7));
     }
     clampPos();
@@ -572,8 +593,8 @@
   }
 
   function clampPos() {
-    curX = Math.min(Math.max(4, curX), Math.max(4, window.innerWidth - BUBBLE - 4));
-    curY = Math.min(Math.max(4, curY), Math.max(4, window.innerHeight - BUBBLE - 4));
+    curX = Math.min(Math.max(4, curX), Math.max(4, window.innerWidth - bubbleSize - 4));
+    curY = Math.min(Math.max(4, curY), Math.max(4, window.innerHeight - bubbleSize - 4));
   }
 
   // ------------------------------------------------------------------ bubble

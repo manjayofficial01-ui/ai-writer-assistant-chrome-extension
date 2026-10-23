@@ -18,6 +18,7 @@ Select any text on a page, tap the bubble, and it **translates automatically**. 
 
 - **Click** — toggles the panel (auto-fills with your page selection and translates)
 - **Drag** — move it; position is saved per browser and survives reloads
+- **Resize** — set the bubble diameter (36–64 px) in **Options → Bubble & context**
 - **Right-click** — hide it (with an *Undo* toast, or re-enable in Options)
 - **Toolbar icon** — toggles the panel on/off on the current tab
 - **Esc** closes the panel · **Ctrl+Enter** runs the current action

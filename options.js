@@ -7,18 +7,49 @@ const LANGS = ['English', 'Nepali', 'Hindi', 'Spanish', 'French', 'German', 'Chi
 
 // Must match BUBBLE_THEMES in content.js and THEMES in tools/gen-icons.cjs
 const ICON_THEMES = [
-  { id: 'black',   label: 'Black',   css: 'linear-gradient(135deg,#2E2A23,#0A0908)' },
-  { id: 'white',   label: 'White',   css: 'linear-gradient(135deg,#FFFFFF,#E7DFD0)' },
-  { id: 'indigo',  label: 'Indigo',  css: 'linear-gradient(135deg,#818CF8,#4F46E5)' },
-  { id: 'sky',     label: 'Sky',     css: 'linear-gradient(135deg,#38BDF8,#0284C7)' },
-  { id: 'emerald', label: 'Emerald', css: 'linear-gradient(135deg,#34D399,#059669)' },
-  { id: 'rose',    label: 'Rose',    css: 'linear-gradient(135deg,#FB7185,#E11D48)' },
-  { id: 'amber',   label: 'Amber',   css: 'linear-gradient(135deg,#FBBF24,#D97706)' }
+  { id: 'black',   label: 'Black',   css: 'linear-gradient(135deg,#2E2A23,#0A0908)', fg: '#F6F0E3' },
+  { id: 'white',   label: 'White',   css: 'linear-gradient(135deg,#FFFFFF,#E7DFD0)', fg: '#171512' },
+  { id: 'indigo',  label: 'Indigo',  css: 'linear-gradient(135deg,#818CF8,#4F46E5)', fg: '#FFFFFF' },
+  { id: 'sky',     label: 'Sky',     css: 'linear-gradient(135deg,#38BDF8,#0284C7)', fg: '#FFFFFF' },
+  { id: 'emerald', label: 'Emerald', css: 'linear-gradient(135deg,#34D399,#059669)', fg: '#FFFFFF' },
+  { id: 'rose',    label: 'Rose',    css: 'linear-gradient(135deg,#FB7185,#E11D48)', fg: '#FFFFFF' },
+  { id: 'amber',   label: 'Amber',   css: 'linear-gradient(135deg,#FBBF24,#D97706)', fg: '#FFFFFF' }
 ];
+
+const BUBBLE_SIZE_DEFAULT = 48;
+const BUBBLE_SIZE_MIN = 36;
+const BUBBLE_SIZE_MAX = 64;
 
 let selectedTheme = 'black';
 
 const $ = (id) => document.getElementById(id);
+
+function clampBubbleSize(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric)
+    ? Math.min(BUBBLE_SIZE_MAX, Math.max(BUBBLE_SIZE_MIN, Math.round(numeric)))
+    : BUBBLE_SIZE_DEFAULT;
+}
+
+function renderSizePreview() {
+  const range = $('bubbleSize');
+  if (!range) return;
+  const size = clampBubbleSize(range.value);
+  const pct = ((size - BUBBLE_SIZE_MIN) / (BUBBLE_SIZE_MAX - BUBBLE_SIZE_MIN)) * 100;
+  $('bubbleSizeValue').textContent = size + ' px';
+  range.style.setProperty('--p', pct.toFixed(1) + '%');
+
+  const theme = ICON_THEMES.find((t) => t.id === selectedTheme) || ICON_THEMES[0];
+  const preview = $('sizePreview');
+  preview.style.width = size + 'px';
+  preview.style.height = size + 'px';
+  preview.style.background = theme.css;
+  preview.style.color = theme.fg || '#fff';
+  const icon = preview.querySelector('svg');
+  const iconSize = Math.round(size * 0.48);
+  icon.style.width = iconSize + 'px';
+  icon.style.height = iconSize + 'px';
+}
 
 function renderSwatches() {
   $('swatches').innerHTML = ICON_THEMES.map((t) => `
@@ -31,6 +62,7 @@ function renderSwatches() {
     b.addEventListener('click', () => {
       selectedTheme = b.dataset.theme;
       renderSwatches();
+      renderSizePreview();
     }));
 }
 
@@ -73,7 +105,8 @@ async function load() {
     targetLang: 'Nepali',
     showBubble: true,
     smartContext: true,
-    iconTheme: 'black'
+    iconTheme: 'black',
+    bubbleSize: BUBBLE_SIZE_DEFAULT
   });
 
   setProvider(s.provider);
@@ -91,6 +124,8 @@ async function load() {
   $('smartContext').checked = s.smartContext !== false;
   selectedTheme = ICON_THEMES.some((t) => t.id === s.iconTheme) ? s.iconTheme : 'black';
   renderSwatches();
+  $('bubbleSize').value = String(clampBubbleSize(s.bubbleSize));
+  renderSizePreview();
 
   // Best-effort auto-fetch so dropdowns are populated on first open.
   if (s.provider === 'gemini') fetchGeminiModels(true);
@@ -111,7 +146,8 @@ async function save() {
     targetLang: $('targetLang').value,
     showBubble: $('showBubble').checked,
     smartContext: $('smartContext').checked,
-    iconTheme: selectedTheme
+    iconTheme: selectedTheme,
+    bubbleSize: clampBubbleSize($('bubbleSize').value)
   });
   const note = $('saveNote');
   note.classList.add('show');
@@ -229,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('fetchGeminiBtn').addEventListener('click', () => fetchGeminiModels(false));
   $('fetchOpenaiBtn').addEventListener('click', () => fetchOpenaiModels(false));
   $('resetPosBtn').addEventListener('click', resetPos);
+  $('bubbleSize').addEventListener('input', renderSizePreview);
   $('apiKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') testKey('gemini'); });
   $('openaiApiKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') testKey('openai'); });
 
