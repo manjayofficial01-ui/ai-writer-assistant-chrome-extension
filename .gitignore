@@ -1,0 +1,7 @@
+# Local-only secrets — never publish
+config.local.js
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "AI Writer Assistant — Translate & Writing Bubble",
+  "short_name": "AI Writer",
+  "version": "1.4.0",
+  "description": "Google-Translate-style floating bubble powered by Gemini or any OpenAI-compatible provider. Select text on any page to translate, fix grammar, reword, define, and coach your writing.",
+  "icons": {
+    "16": "icons/black/icon16.png",
+    "32": "icons/black/icon32.png",
+    "48": "icons/black/icon48.png",
+    "128": "icons/black/icon128.png"
+  },
+  "action": {
+    "default_title": "Toggle AI Writer bubble",
+    "default_icon": {
+      "16": "icons/black/icon16.png",
+      "24": "icons/black/icon24.png",
+      "32": "icons/black/icon32.png",
+      "48": "icons/black/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "web_accessible_resources": [
+    {
+      "resources": ["options.html"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ]
+}
